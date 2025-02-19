@@ -51,18 +51,28 @@ h2 {
 .footer-links {
   text-align: center;
   margin-top: 1rem;
+  color: #007bff;
+  border: 0px;
 }
 
 .toggle-link {
   color: #007bff;
   cursor: pointer;
+  margin-top: 0.5rem;
+
+}
+.forgot-password-button{
+  color: #007bff;
+  cursor: pointer;
+  border:none;
+  background-color: white;
+  padding-bottom: 0px;
+
 }
 
-.error-text {
-  color: red;
-  font-size: 0.875rem;
-}
 
+
+* Forgot Password Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -73,26 +83,68 @@ h2 {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .modal-box {
-  background: white;
+  background: #ffffff;
   padding: 2rem;
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 400px;
+  text-align: center;
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.forgot-password-button,
-.close-modal-button {
-  background: none;
+h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal-box input {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.form-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #4caf50;
   border: none;
-  color: #007bff;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
   cursor: pointer;
-  text-decoration: underline;
+  transition: background-color 0.3s;
+  margin-top: 1rem;
 }
 
-.forgot-password-button:hover,
-.close-modal-button:hover {
-  color: #0056b3;
-}  
+.form-button:hover {
+  background-color: #45a049;
+}
+
+.close-btn {
+  background-color: #d9534f;
+}
+
+.close-btn:hover {
+  background-color: #c9302c;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

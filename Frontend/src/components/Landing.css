@@ -9,11 +9,13 @@ body {
 .landing {
   text-align: center;
   width:100vw;
+ 
 }
 
 
 /* Navbar */
 .navbar {
+  height:50px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,6 +29,7 @@ body {
 }
 
 .logo {
+  padding-top: 60px;
   font-size: 1.8rem;
   font-weight: bold;
   font-family: 'Georgia', serif; /* Traditional-looking font */

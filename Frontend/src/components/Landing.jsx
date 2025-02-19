@@ -10,6 +10,7 @@ import alu from './images/alu.avif'
 import momo from './images/momo.jpg'
 import dyakula from './images/dyakula.jpg'
 import sukuti from './images/sukuti.jpg'
+import chyang from './images/chyang.jpeg'
 
 
 const Landing = () => {
@@ -33,9 +34,7 @@ const Landing = () => {
 <li>
   <a href="/login">Login</a>
 </li>
-          <li>
-            <a href="#login">Login as Admin</a>
-          </li>
+          
         </ul>
       </nav>
 
@@ -117,35 +116,12 @@ const Landing = () => {
       <p className="price">NPR 250</p>
     </div>
     <div className="menu-item">
-      <img src="path_to_image/sakhar.jpg" alt="Sakhar" />
-      <h3>Sakhar</h3>
-      <p>Sweetened barley flour dumplings, a special Newari dessert.</p>
-      <p className="price">NPR 100</p>
+      <img src={chyang} alt="chyang" />
+      <h3>Chyang</h3>
+      <p>Chyang is a traditional Nepali alcoholic beverage made from fermented rice, barley, or millet.</p>
+      <p className="price">NPR 200</p>
     </div>
-    <div className="menu-item">
-      <img src="path_to_image/lassi.jpg" alt="Lassi" />
-      <h3>Lassi</h3>
-      <p>A yogurt-based drink, sweet or salted, refreshing and cooling.</p>
-      <p className="price">NPR 120</p>
-    </div>
-    <div className="menu-item">
-      <img src="path_to_image/juju_dhau.jpg" alt="Juju Dhau" />
-      <h3>Juju Dhau</h3>
-      <p>A sweet, creamy yogurt dessert topped with sugar syrup and dry fruits.</p>
-      <p className="price">NPR 180</p>
-    </div>
-    <div className="menu-item">
-      <img src="path_to_image/newari_burger.jpg" alt="Newari Burger" />
-      <h3>Newari Burger</h3>
-      <p>A twist on the traditional burger with Newari spices and fillings.</p>
-      <p className="price">NPR 250</p>
-    </div>
-    <div className="menu-item">
-      <img src="path_to_image/newari_burger.jpg" alt="Newari Burger" />
-      <h3>Newari Burger</h3>
-      <p>A twist on the traditional burger with Newari spices and fillings.</p>
-      <p className="price">NPR 250</p>
-    </div>
+   
   </div>
 </section>
 
