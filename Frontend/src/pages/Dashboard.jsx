@@ -13,7 +13,6 @@ function Dashboard() {
   return (
     <div className="dashboard">
       <h1>Khanpan Restaurant</h1>
-
       <div className="stats-grid">
         <div className="stat-card">
           <h3>Total Revenue</h3>
