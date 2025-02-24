@@ -1,11 +1,9 @@
-"use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { EllipsisVerticalIcon, PlusIcon, XMarkIcon, MinusIcon } from "@heroicons/react/24/solid"
-import { useMenu } from "../context/MenuContext"
+import axios from "axios"
 
 function Orders() {
-  const { menuItems } = useMenu()
+  const [menuItems, setMenuItems] = useState([])
   const [orders, setOrders] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState("add")
@@ -15,6 +13,43 @@ function Orders() {
   const [selectedItems, setSelectedItems] = useState([])
   const [customer, setCustomer] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+
+  useEffect(() => {
+    fetchMenuItems()
+    fetchOrders()
+  }, [])
+
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:4000/api",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+    },
+  })
+
+  const fetchMenuItems = async () => {
+    try {
+      const response = await axiosInstance.get("/products")
+      setMenuItems(response.data.data)
+    } catch (error) {
+      console.error("Error fetching menu items:", error)
+    }
+  }
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axiosInstance.get("/orders")
+      setOrders(response.data.data)
+      updateOccupiedTables(response.data.data)
+    } catch (error) {
+      console.error("Error fetching orders:", error)
+    }
+  }
+
+  const updateOccupiedTables = (orders) => {
+    const tables = orders?.filter((order) => order.status !== "Delivered").map((order) => order.tableNo)
+    setOccupiedTables(tables)
+  }
 
   const categories = ["All", ...new Set(menuItems.map((item) => item.category))]
 
@@ -28,80 +63,74 @@ function Orders() {
   const openUpdateModal = (order) => {
     setModalMode("update")
     setSelectedOrder(order)
-    setSelectedItems(parseOrderItems(order.items))
-    setCustomer(order.customer)
+    setSelectedItems(parseOrderItems(order.products))
+    setCustomer(order.tableNo)
     setIsModalOpen(true)
   }
 
-  const parseOrderItems = (itemsString) => {
-    return itemsString.split(", ").map((item) => {
-      const [name, quantityStr] = item.split(" (")
-      const quantity = Number.parseInt(quantityStr.replace(")", ""))
-      const menuItem = menuItems.find((mi) => mi.name === name)
-      return { ...menuItem, quantity }
-    })
+  const parseOrderItems = (products) => {
+    return products.map((product) => ({
+      ...product,
+      quantity: product.OrderProduct.quantity,
+    }))
   }
 
-  const handleAddOrUpdateOrder = () => {
-    if (modalMode === "add") {
-      const newOrder = {
-        id: `#${Math.floor(Math.random() * 1000)}`,
-        customer,
-        items: selectedItems.map((item) => `${item.name} (${item.quantity})`).join(", "),
-        status: "Preparing",
-        total: `Rs. ${calculateTotal()}`,
+  const handleAddOrUpdateOrder = async () => {
+    try {
+      const orderData = {
+        tableNo: customer,
+        products: selectedItems.map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
+        })),
       }
-      setOrders([...orders, newOrder])
-      setOccupiedTables([...occupiedTables, customer])
-    } else if (selectedOrder) {
-      const updatedOrder = {
-        ...selectedOrder,
-        items: selectedItems.map((item) => `${item.name} (${item.quantity})`).join(", "),
-        total: `Rs. ${calculateTotal()}`,
+
+      if (modalMode === "add") {
+        await axiosInstance.post("/orders", orderData)
+      } else if (selectedOrder) {
+        await axiosInstance.put(`/orders/${selectedOrder.id}`, orderData)
       }
-      setOrders(orders.map((order) => (order.id === updatedOrder.id ? updatedOrder : order)))
+
+      fetchOrders()
+      setIsModalOpen(false)
+    } catch (error) {
+      console.error("Error adding/updating order:", error)
     }
-    setIsModalOpen(false)
   }
 
-  const handleStatusChange = (orderId, newStatus) => {
-    setOrders(
-      orders.map((order) => {
-        if (order.id === orderId) {
-          if (newStatus === "Delivered") {
-            setOccupiedTables(occupiedTables.filter((table) => table !== order.customer))
-          }
-          return { ...order, status: newStatus }
-        }
-        return order
-      }),
-    )
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await axiosInstance.put(`/orders/${orderId}`, { status: newStatus })
+      fetchOrders()
+    } catch (error) {
+      console.error("Error updating order status:", error)
+    }
   }
 
   const filteredMenuItems =
     selectedCategory === "All" ? menuItems : menuItems.filter((item) => item.category === selectedCategory)
 
   const handleAddItem = (item) => {
-    const existingItem = selectedItems.find((i) => i.name === item.name)
+    const existingItem = selectedItems.find((i) => i.id === item.id)
     if (existingItem) {
-      setSelectedItems(selectedItems.map((i) => (i.name === item.name ? { ...i, quantity: i.quantity + 1 } : i)))
+      setSelectedItems(selectedItems.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)))
     } else {
       setSelectedItems([...selectedItems, { ...item, quantity: 1 }])
     }
   }
 
   const handleRemoveItem = (item) => {
-    setSelectedItems(selectedItems.filter((i) => i.name !== item.name))
+    setSelectedItems(selectedItems.filter((i) => i.id !== item.id))
   }
 
   const handleQuantityChange = (item, change) => {
     setSelectedItems(
-      selectedItems.map((i) => (i.name === item.name ? { ...i, quantity: Math.max(1, i.quantity + change) } : i)),
+      selectedItems.map((i) => (i.id === item.id ? { ...i, quantity: Math.max(1, i.quantity + change) } : i)),
     )
   }
 
   const calculateTotal = () => {
-    return selectedItems.reduce((sum, item) => sum + Number.parseInt(item.price.replace("Rs. ", "")) * item.quantity, 0)
+    return selectedItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0)
   }
 
   return (
@@ -117,7 +146,7 @@ function Orders() {
           <thead>
             <tr>
               <th>Order ID</th>
-              <th>Customer</th>
+              <th>Table No</th>
               <th>Items</th>
               <th>Status</th>
               <th>Total</th>
@@ -128,12 +157,12 @@ function Orders() {
             {orders.map((order) => (
               <tr key={order.id}>
                 <td>{order.id}</td>
-                <td>{order.customer}</td>
-                <td>{order.items}</td>
+                <td>{order.tableNo}</td>
+                <td>{order.products.map((p) => `${p.name} (${p.OrderProduct.quantity})`).join(", ")}</td>
                 <td>
                   <span className={`status ${order.status.toLowerCase()}`}>{order.status}</span>
                 </td>
-                <td>{order.total}</td>
+                <td>Rs. {order.totalPrice}</td>
                 <td>
                   <div className="dropdown">
                     <button className="icon-button">
@@ -209,11 +238,11 @@ function Orders() {
                 <label>Menu Items</label>
                 <div className="menu-items-grid">
                   {filteredMenuItems.map((item) => (
-                    <button key={item.name} type="button" className="menu-item-btn" onClick={() => handleAddItem(item)}>
+                    <button key={item.id} type="button" className="menu-item-btn" onClick={() => handleAddItem(item)}>
                       <div className="menu-item-content">
                         <h3>{item.name}</h3>
                         <p>{item.description}</p>
-                        <div className="price">{item.price}</div>
+                        <div className="price">Rs. {item.price}</div>
                       </div>
                     </button>
                   ))}
@@ -224,10 +253,10 @@ function Orders() {
                   <label>Selected Items</label>
                   <ul className="selected-items-list">
                     {selectedItems.map((item) => (
-                      <li key={item.name}>
+                      <li key={item.id}>
                         <div className="selected-item-info">
                           <span className="item-name">{item.name}</span>
-                          <span className="item-price">{item.price}</span>
+                          <span className="item-price">Rs. {item.price}</span>
                         </div>
                         <div className="quantity-control">
                           <button type="button" onClick={() => handleQuantityChange(item, -1)}>
@@ -266,4 +295,3 @@ function Orders() {
 }
 
 export default Orders
-

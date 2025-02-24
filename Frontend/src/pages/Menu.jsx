@@ -1,14 +1,13 @@
 
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/solid"
 import { motion, AnimatePresence } from "framer-motion"
-import { useMenu } from "../context/MenuContext"
+import axios from "axios"
 
 const categories = ["Appetizers", "Main Course", "Beverages", "Desserts"]
 
 function Menu() {
-  const { menuItems, addMenuItem, updateMenuItem } = useMenu()
+  const [menuItems, setMenuItems] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentItem, setCurrentItem] = useState(null)
   const [activeCategory, setActiveCategory] = useState("All")
@@ -20,6 +19,27 @@ function Menu() {
     category: categories[0],
   })
 
+  useEffect(() => {
+    fetchMenuItems()
+  }, [])
+
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:4000/api",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+    },
+  })
+
+  const fetchMenuItems = async () => {
+    try {
+      const response = await axiosInstance.get("/products")
+      setMenuItems(response.data.data)
+    } catch (error) {
+      console.error("Error fetching menu items:", error)
+    }
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prevState) => ({
@@ -28,14 +48,19 @@ function Menu() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (currentItem) {
-      updateMenuItem(currentItem.name, formData)
-    } else {
-      addMenuItem(formData)
+    try {
+      if (currentItem) {
+        await axiosInstance.put(`/products/${currentItem.id}`, formData)
+      } else {
+        await axiosInstance.post("/products", formData)
+      }
+      fetchMenuItems()
+      closeModal()
+    } catch (error) {
+      console.error("Error submitting form:", error)
     }
-    closeModal()
   }
 
   const openModal = (item = null) => {
@@ -59,8 +84,17 @@ function Menu() {
     setCurrentItem(null)
   }
 
+  const deleteMenuItem = async (id) => {
+    try {
+      await axiosInstance.delete(`/products/${id}`)
+      fetchMenuItems()
+    } catch (error) {
+      console.error("Error deleting menu item:", error)
+    }
+  }
+
   const filteredItems =
-    activeCategory === "All" ? menuItems : menuItems.filter((item) => item.category === activeCategory)
+    activeCategory === "All" ? menuItems : menuItems?.filter((item) => item.category === activeCategory)
 
   return (
     <div className="menu">
@@ -94,7 +128,7 @@ function Menu() {
         <AnimatePresence>
           {filteredItems.map((item) => (
             <motion.div
-              key={item.name}
+              key={item.id}
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -107,9 +141,14 @@ function Menu() {
                 <p>{item.description}</p>
                 <div className="price">{item.price}</div>
               </div>
-              <button className="edit-btn" onClick={() => openModal(item)}>
-                Edit
-              </button>
+              <div className="menu-item-actions">
+                <button className="edit-btn" onClick={() => openModal(item)}>
+                  Edit
+                </button>
+                <button className="delete-btn" onClick={() => deleteMenuItem(item.id)}>
+                  Delete
+                </button>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
@@ -208,4 +247,3 @@ function Menu() {
 }
 
 export default Menu
-
