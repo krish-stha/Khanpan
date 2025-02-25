@@ -27,10 +27,7 @@ function Sidebar() {
           <span>Orders</span>
         </NavLink>
         
-        <NavLink to="/sales" className={({ isActive }) => isActive ? 'active' : ''}>
-          <ChartBarIcon className="icon" />
-          <span>Sales</span>
-        </NavLink>
+   
         
         <NavLink to="/menu" className={({ isActive }) => isActive ? 'active' : ''}>
           <Squares2X2Icon className="icon" />

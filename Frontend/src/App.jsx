@@ -39,7 +39,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
-import Sales from "./pages/Sales";
+
 import Menu from "./pages/Menu";
 import Setup from "./pages/Setup";
 import { MenuProvider } from "./context/MenuContext";
@@ -60,7 +60,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/orders" element={<Orders />} />
-            <Route path="/sales" element={<Sales />} />
+            
             <Route path="/menu" element={<Menu />} />
             <Route path="/setup" element={<Setup />} />
           </Route>

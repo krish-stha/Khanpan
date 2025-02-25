@@ -1,5 +1,7 @@
+"use client"
+
 import { useState, useEffect } from "react"
-import { EllipsisVerticalIcon, PlusIcon, XMarkIcon, MinusIcon } from "@heroicons/react/24/solid"
+import { PlusIcon, XMarkIcon, MinusIcon, TrashIcon } from "@heroicons/react/24/solid"
 import axios from "axios"
 
 function Orders() {
@@ -9,10 +11,10 @@ function Orders() {
   const [modalMode, setModalMode] = useState("add")
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [occupiedTables, setOccupiedTables] = useState([])
-
   const [selectedItems, setSelectedItems] = useState([])
   const [customer, setCustomer] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [orderStatus, setOrderStatus] = useState("Preparing")
 
   useEffect(() => {
     fetchMenuItems()
@@ -51,12 +53,13 @@ function Orders() {
     setOccupiedTables(tables)
   }
 
-  const categories = ["All", ...new Set(menuItems.map((item) => item.category))]
+  const categories = ["All", ...Array.from(new Set(menuItems.map((item) => item.category)))]
 
   const openAddModal = () => {
     setModalMode("add")
     setSelectedItems([])
     setCustomer("")
+    setOrderStatus("Preparing")
     setIsModalOpen(true)
   }
 
@@ -65,6 +68,7 @@ function Orders() {
     setSelectedOrder(order)
     setSelectedItems(parseOrderItems(order.products))
     setCustomer(order.tableNo)
+    setOrderStatus(order.status)
     setIsModalOpen(true)
   }
 
@@ -75,6 +79,18 @@ function Orders() {
     }))
   }
 
+  const handleDeleteOrder = async (orderId) => {
+    if (window.confirm("Are you sure you want to delete this order?")) {
+      try {
+        await axiosInstance.delete(`/orders/${orderId}`)
+        fetchOrders()
+      } catch (error) {
+        console.error("Error deleting order:", error)
+        alert("Failed to delete order")
+      }
+    }
+  }
+
   const handleAddOrUpdateOrder = async () => {
     try {
       const orderData = {
@@ -83,27 +99,21 @@ function Orders() {
           id: item.id,
           quantity: item.quantity,
         })),
+        status: orderStatus,
       }
 
+      let response
       if (modalMode === "add") {
-        await axiosInstance.post("/orders", orderData)
+        response = await axiosInstance.post("/orders", orderData)
       } else if (selectedOrder) {
-        await axiosInstance.put(`/orders/${selectedOrder.id}`, orderData)
+        response = await axiosInstance.put(`/orders/${selectedOrder.id}`, orderData)
       }
 
       fetchOrders()
       setIsModalOpen(false)
     } catch (error) {
       console.error("Error adding/updating order:", error)
-    }
-  }
-
-  const handleStatusChange = async (orderId, newStatus) => {
-    try {
-      await axiosInstance.put(`/orders/${orderId}`, { status: newStatus })
-      fetchOrders()
-    } catch (error) {
-      console.error("Error updating order status:", error)
+      alert(`An error occurred: ${error.response?.data?.error || error.message}`)
     }
   }
 
@@ -130,7 +140,7 @@ function Orders() {
   }
 
   const calculateTotal = () => {
-    return selectedItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0)
+    return selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   }
 
   return (
@@ -138,7 +148,7 @@ function Orders() {
       <div className="header">
         <h1>Khanpan Restaurant</h1>
         <button className="add-order-btn" onClick={openAddModal}>
-          <PlusIcon className="icon" /> Add Order
+          <PlusIcon className="icon w-5 h-5 mr-2" /> Add Order
         </button>
       </div>
       <div className="orders-table">
@@ -150,31 +160,32 @@ function Orders() {
               <th>Items</th>
               <th>Status</th>
               <th>Total</th>
-              <th></th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
+            {orders?.map((order) => (
               <tr key={order.id}>
                 <td>{order.id}</td>
                 <td>{order.tableNo}</td>
-                <td>{order.products.map((p) => `${p.name} (${p.OrderProduct.quantity})`).join(", ")}</td>
+                <td>{order?.products?.map((p) => `${p.name} (${p.OrderProduct.quantity})`).join(", ")}</td>
                 <td>
-                  <span className={`status ${order.status.toLowerCase()}`}>{order.status}</span>
+                  <span className={`status-badge ${order.status.toLowerCase()}`}>{order.status}</span>
                 </td>
                 <td>Rs. {order.totalPrice}</td>
-                <td>
-                  <div className="dropdown">
-                    <button className="icon-button">
-                      <EllipsisVerticalIcon className="icon" />
-                    </button>
-                    <div className="dropdown-content">
-                      <button onClick={() => handleStatusChange(order.id, "Preparing")}>Preparing</button>
-                      <button onClick={() => handleStatusChange(order.id, "Ready")}>Ready</button>
-                      <button onClick={() => handleStatusChange(order.id, "Delivered")}>Delivered</button>
-                      <button onClick={() => openUpdateModal(order)}>Update Order</button>
-                    </div>
-                  </div>
+                <td className="actions-cell">
+                  
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button className="update-btn" onClick={() => openUpdateModal(order)}>
+               Update
+                </button>
+               <button className="hard" onClick={() => handleDeleteOrder(order.id)}>
+                 <TrashIcon className="delete-btn"/>
+                </button>
+                </div>
+
+                  
+                  
                 </td>
               </tr>
             ))}
@@ -187,7 +198,7 @@ function Orders() {
             <div className="modal-header">
               <h2>{modalMode === "add" ? "Add New Order" : `Update Order for ${customer}`}</h2>
               <button className="close-modal" onClick={() => setIsModalOpen(false)}>
-                <XMarkIcon className="icon" />
+                <XMarkIcon className="icon w-6 h-6" />
               </button>
             </div>
             <form
@@ -217,6 +228,21 @@ function Orders() {
                         {occupiedTables.includes(`Table ${tableNum}`) ? " (Occupied)" : ""}
                       </option>
                     ))}
+                  </select>
+                </div>
+              )}
+              {modalMode === "update" && (
+                <div className="form-group">
+                  <label htmlFor="status">Order Status</label>
+                  <select
+                    id="status"
+                    className="form-input"
+                    value={orderStatus}
+                    onChange={(e) => setOrderStatus(e.target.value)}
+                  >
+                    <option value="Preparing">Preparing</option>
+                    <option value="Ready">Ready</option>
+                    <option value="Delivered">Delivered</option>
                   </select>
                 </div>
               )}
@@ -260,14 +286,14 @@ function Orders() {
                         </div>
                         <div className="quantity-control">
                           <button type="button" onClick={() => handleQuantityChange(item, -1)}>
-                            <MinusIcon className="icon" />
+                            <MinusIcon className="icon w-4 h-4" />
                           </button>
                           <span>{item.quantity}</span>
                           <button type="button" onClick={() => handleQuantityChange(item, 1)}>
-                            <PlusIcon className="icon" />
+                            <PlusIcon className="icon w-4 h-4" />
                           </button>
                           <button type="button" className="remove-item-btn" onClick={() => handleRemoveItem(item)}>
-                            <XMarkIcon className="icon" />
+                            <XMarkIcon className="icon w-4 h-4" />
                           </button>
                         </div>
                       </li>
@@ -295,3 +321,4 @@ function Orders() {
 }
 
 export default Orders
+

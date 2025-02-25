@@ -127,15 +127,16 @@ function Menu() {
       <motion.div className="menu-items" layout>
         <AnimatePresence>
           {filteredItems.map((item) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="menu-item-card"
-            >
+           <motion.div
+           key={item.id}
+           layout
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           exit={{ opacity: 0, y: -20 }}
+           transition={{ duration: 0.4, ease: "easeInOut" }}
+           className="menu-item-card"
+         >
+         
               <div className="menu-item-content">
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
@@ -157,14 +158,15 @@ function Menu() {
       <AnimatePresence>
         {isModalOpen && (
           <div className="modal-overlay" onClick={closeModal}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="modal-content"
-              onClick={(e) => e.stopPropagation()}
-            >
+           <motion.div
+  initial={{ opacity: 0, scale: 0.9 }}
+  animate={{ opacity: 1, scale: 1 }}
+  exit={{ opacity: 0, scale: 0.9 }}
+  transition={{ duration: 0.3, ease: "easeInOut" }}
+  className="modal-content"
+  onClick={(e) => e.stopPropagation()}
+>
+
               <div className="modal-header">
                 <h2 className="text-xl font-semibold text-primary">
                   {currentItem ? "Edit Menu Item" : "Add New Menu Item"}
