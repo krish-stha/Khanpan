@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get("/", authenticateToken, orderController.getAll);
 router.post("/", authenticateToken, orderController.create);
-router.put("/:id", authenticateToken, orderController.update);
+router.patch("/:id", authenticateToken, orderController.update);
 router.get("/:id", authenticateToken, orderController.getById);
 router.delete("/:id", authenticateToken, orderController.deleteById);
 

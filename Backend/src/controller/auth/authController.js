@@ -31,20 +31,29 @@ const login = async (req, res) => {
  *  init
  */
 
-const init = async (req, res) => {
+
+const getMe = async (req, res) => {
   try {
-    const user = req.user.user;
+    // req.user is set by authenticateToken middleware.
+    const user = req.user
+    console.log(user)
+    if (!user) {
+      return res.status(401).send({ message: "Unauthorized" });
+    }
+    // Remove sensitive data
     delete user.password;
-    res
-      .status(201)
-      .send({ data: user, message: "successfully fetched current  user" });
+
+    res.status(200).send({
+      data: user,
+      message: "Successfully fetched current user",
+    });
   } catch (e) {
-    console.log(e);
-    res.status(500).json({ error: "Failed to fetch users" });
+    console.error(e);
+    res.status(500).json({ error: "Failed to fetch current user" });
   }
 };
 
 export const authController = {
   login,
-  init,
+  getMe,
 };

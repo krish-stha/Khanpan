@@ -23,21 +23,20 @@ const getAll = async (req, res) => {
 
 const create = async (req, res) => {
   const t = await sequelize.transaction();
-  
   try {
     const { tableNo, products } = req.body;
-    
     if (!tableNo || !products || !Array.isArray(products)) {
       return res.status(400).send({ message: "Invalid payload" });
     }
 
-    // Fetch all products to get their current prices
+    // Fetch products to get current prices
     const productIds = products.map(p => p.id);
     const productDetails = await Product.findAll({
       where: { id: productIds }
     });
 
-    // Calculate total price
+    // Prepare order item names and calculate total price
+    let orderItems = [];
     let totalPrice = 0;
     const orderProducts = products.map(orderProduct => {
       const product = productDetails.find(p => p.id === orderProduct.id);
@@ -45,7 +44,8 @@ const create = async (req, res) => {
       
       const lineTotal = parseFloat(product.price) * orderProduct.quantity;
       totalPrice += lineTotal;
-
+      orderItems.push(product.name);
+      
       return {
         ProductId: orderProduct.id,
         quantity: orderProduct.quantity,
@@ -53,11 +53,15 @@ const create = async (req, res) => {
       };
     });
 
-    // Create order
+    // Join the product names to store in the Order's itemName field
+    const itemName = orderItems.join(", ");
+
+    // Create order (include itemName)
     const order = await Order.create({
       tableNo,
       totalPrice,
-      status: "Preparing"
+      status: "Preparing",
+      itemName
     }, { transaction: t });
 
     // Create order-product associations
@@ -85,7 +89,6 @@ const create = async (req, res) => {
       data: completeOrder, 
       message: "Successfully created order" 
     });
-
   } catch (e) {
     await t.rollback();
     console.error("Error creating order:", e);

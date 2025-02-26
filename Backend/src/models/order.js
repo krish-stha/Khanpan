@@ -21,7 +21,11 @@ export const Order = sequelize.define("Order", {
   totalPrice: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-  }
+  },
+  itemName:{
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 // Junction table for many-to-many relationship between Order and Product

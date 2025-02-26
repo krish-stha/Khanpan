@@ -1,46 +1,15 @@
-// AddOrderModal.jsx
+"use client";
+
 import { useState } from "react";
+import axios from "axios";
 import { XMarkIcon, MinusIcon, PlusIcon } from "@heroicons/react/24/solid";
 
-const menuItems = [
-  {
-    name: "Chatamari",
-    description: "Traditional Newari pizza made with rice flour",
-    price: "Rs. 250",
-    category: "Main Course",
-  },
-  {
-    name: "Yomari",
-    description: "Steamed rice dough filled with chaku",
-    price: "Rs. 200",
-    category: "Desserts",
-  },
-  {
-    name: "Choyla",
-    description: "Spiced grilled buffalo meat",
-    price: "Rs. 300",
-    category: "Appetizers",
-  },
-  {
-    name: "Aalu Tama",
-    description: "Bamboo shoot curry with potatoes",
-    price: "Rs. 200",
-    category: "Main Course",
-  },
-  {
-    name: "Lassi",
-    description: "Traditional yogurt-based drink",
-    price: "Rs. 150",
-    category: "Beverages",
-  },
-];
-
-const categories = ["All", ...new Set(menuItems.map((item) => item.category))];
-
-function AddOrderModal({ onClose, onAddOrder, occupiedTables }) {
+function AddOrderModal({ onClose, onOrderAdded, occupiedTables, menuItems }) {
   const [selectedItems, setSelectedItems] = useState([]);
   const [customer, setCustomer] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const categories = ["All", ...new Set(menuItems.map((item) => item.category))];
 
   const filteredMenuItems =
     selectedCategory === "All"
@@ -82,17 +51,34 @@ function AddOrderModal({ onClose, onAddOrder, occupiedTables }) {
     );
   };
 
-  const handleSubmit = (e) => {
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:4000/api",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!customer || selectedItems.length === 0) return;
-    const newOrder = {
-      id: `#${Math.floor(Math.random() * 1000)}`,
-      customer,
-      items: selectedItems.map((item) => `${item.name} (${item.quantity})`).join(", "),
+    const orderData = {
+      tableNo: customer,
+      products: selectedItems.map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+      })),
       status: "Preparing",
-      total: `Rs. ${calculateTotal()}`,
     };
-    onAddOrder(newOrder);
+
+    try {
+      await axiosInstance.post("/orders", orderData);
+      onOrderAdded();
+      onClose();
+    } catch (error) {
+      console.error("Error adding order:", error);
+      alert("Failed to add order");
+    }
   };
 
   return (
@@ -101,7 +87,7 @@ function AddOrderModal({ onClose, onAddOrder, occupiedTables }) {
         <div className="modal-header">
           <h2>Add New Order</h2>
           <button className="close-modal" onClick={onClose}>
-            <XMarkIcon className="icon" />
+            <XMarkIcon className="icon w-6 h-6" />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -121,8 +107,8 @@ function AddOrderModal({ onClose, onAddOrder, occupiedTables }) {
                   value={`Table ${tableNum}`}
                   disabled={occupiedTables.includes(`Table ${tableNum}`)}
                 >
-                  Table {tableNum}
-                  {occupiedTables.includes(`Table ${tableNum}`) ? " (Occupied)" : ""}
+                  Table {tableNum}{" "}
+                  {occupiedTables.includes(`Table ${tableNum}`) ? "(Occupied)" : ""}
                 </option>
               ))}
             </select>
@@ -172,14 +158,14 @@ function AddOrderModal({ onClose, onAddOrder, occupiedTables }) {
                     </div>
                     <div className="quantity-control">
                       <button type="button" onClick={() => handleQuantityChange(item, -1)}>
-                        <MinusIcon className="icon" />
+                        <MinusIcon className="icon w-4 h-4" />
                       </button>
                       <span>{item.quantity}</span>
                       <button type="button" onClick={() => handleQuantityChange(item, 1)}>
-                        <PlusIcon className="icon" />
+                        <PlusIcon className="icon w-4 h-4" />
                       </button>
                       <button type="button" className="remove-item-btn" onClick={() => handleRemoveItem(item)}>
-                        <XMarkIcon className="icon" />
+                        <XMarkIcon className="icon w-4 h-4" />
                       </button>
                     </div>
                   </li>
