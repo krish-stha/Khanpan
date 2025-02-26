@@ -14,7 +14,7 @@ export const Order = sequelize.define("Order", {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM("Preparing", "Ready", "Delivered"),
+    type: DataTypes.ENUM("Preparing", "Ready", "Paid"),
     defaultValue: "Preparing",
     allowNull: false,
   },

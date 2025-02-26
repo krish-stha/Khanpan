@@ -49,7 +49,7 @@ function Orders() {
 
   const updateOccupiedTables = (orders) => {
     const tables = orders
-      .filter((order) => order.status !== "Delivered")
+      .filter((order) => order.status !== "Paid")
       .map((order) => order.tableNo);
     setOccupiedTables(tables);
   };

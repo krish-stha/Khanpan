@@ -47,7 +47,7 @@ function UpdateOrderModal({ order, onClose, onOrderUpdated }) {
             >
               <option value="Preparing">Preparing</option>
               <option value="Ready">Ready</option>
-              <option value="Delivered">Delivered</option>
+              <option value="Paid">Paid</option>
             </select>
           </div>
           <div className="modal-footer">
