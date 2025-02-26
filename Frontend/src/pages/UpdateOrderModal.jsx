@@ -24,7 +24,7 @@ function UpdateOrderModal({ order, onClose, onOrderUpdated }) {
       onClose();
     } catch (error) {
       console.error("Error updating order status:", error);
-      alert("Failed to update order status");
+      alert("Failed to update order status, check it.");
     }
   };
 
