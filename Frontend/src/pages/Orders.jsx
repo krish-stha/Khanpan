@@ -42,6 +42,7 @@ function Orders() {
     try {
       const response = await axiosInstance.get("/orders")
       setOrders(response.data.data)
+      console.log(orders)
       updateOccupiedTables(response.data.data)
     } catch (error) {
       console.error("Error fetching orders:", error)
@@ -180,7 +181,7 @@ function Orders() {
                Update
                 </button>
                <button className="hard" onClick={() => handleDeleteOrder(order.id)}>
-                 <TrashIcon className="delete-btn"/>
+                 <TrashIcon className="delete-btnn"/>
                 </button>
                 </div>
 
